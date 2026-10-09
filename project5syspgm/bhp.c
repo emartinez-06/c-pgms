@@ -54,6 +54,11 @@ int main(){
         for(i = 0; i < charsRead; i++){
           if(buf[i] == '\n'){
             line[lineLen] = '\0';
+
+            printf("%s\n", line);
+            lineLen = 0;
+          }else{
+            line[lineLen++]=buf[i];
           }   
         }
     }
