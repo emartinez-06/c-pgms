@@ -1,5 +1,3 @@
-#ifndef bhp_c
-#define bhp_c
 /**
  * file: bhp.c 
  * author: erick martinez
@@ -15,12 +13,13 @@
  *    - ensured all edge cases were accounted for
  *
  * This C program reads from stdin a list of commands and assigns them objects in
- *  dynamically growing list to count occurences of said commands.
+ *  a dynamically growing list to count occurences of said commands.
  */
 
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Count commands encountered in .bash_history. */
 typedef struct CmdRec {
@@ -54,7 +53,24 @@ int grow(CmdList *list) {
 }
 
 int proccessLine(CmdList *list, const char *line) {
-  /* TODO: Extract the command name and update its record. */
+  size_t i;
+  for(i = 0; i < list->size; i++){
+    if(strcmp(list->cmds[i].cmdName, line) == 0){
+      list->cmds[i].cmdCount++;
+      return 1;
+    }
+  }
+      if(list->size == list->capacity){
+        if(!grow(list)){
+          return 0;
+        }
+      }
+
+      strncpy(list->cmds[list->size].cmdName, line, 12);
+      list->cmds[list->size].cmdName[12] = '\0';
+      list->cmds[list->size].cmdCount = 1;
+      list->size++;
+
   return 1;
 }
 
@@ -102,9 +118,15 @@ int main(void) {
     printf("Got line: %s\n", line);
     proccessLine(&list, line);
   }
+  
+  size_t i;
+  for(i = 0; i < list.size; i++){
+    printf("%-12s %4d\n",
+        list.cmds[i].cmdName,
+      list.cmds[i].cmdCount);
+  }
 
   free(list.cmds);
   return 0;
 }
 
-#endif
