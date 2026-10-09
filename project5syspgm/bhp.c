@@ -54,6 +54,9 @@ int grow(CmdList *list) {
 
 int proccessLine(CmdList *list, const char *line) {
   size_t i;
+  if(line[0] == '\0'){
+    return 1;
+  }
   for(i = 0; i < list->size; i++){
     if(strcmp(list->cmds[i].cmdName, line) == 0){
       list->cmds[i].cmdCount++;
@@ -91,8 +94,11 @@ int main(void) {
     for (ssize_t i = 0; i < charsRead; i++) {
       if (buf[i] == '\n') {
         line[lineLen] = '\0';
-        printf("Got line: %s\n", line);
-        proccessLine(&list, line);
+        if(proccessLine(&list, line) == 0){
+          fprintf(stderr, "Failed to process command\n");
+          free(list.cmds);
+          return 1;
+        }
         lineLen = 0;
       } else {
         if (lineLen >= sizeof(line) - 1) {
@@ -115,8 +121,11 @@ int main(void) {
   /* Handle the final line when it has no newline. */
   if (lineLen > 0) {
     line[lineLen] = '\0';
-    printf("Got line: %s\n", line);
-    proccessLine(&list, line);
+    if(proccessLine(&list, line) == 0){
+          fprintf(stderr, "Failed to process command\n");
+          free(list.cmds);
+          return 1;
+        }
   }
   
   size_t i;
