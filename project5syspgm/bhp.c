@@ -2,13 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-size_t strlen(char const* str){
-  char const* p;
-  for (p = str; *p; ++p);
-  return p - str;
-
-}
-
 /* struct used to kepp a count of commands encountered in .bash_history */
 typedef struct CmdRec{
   char cmdName[13]; /* null terminated name of comamnd */
@@ -40,9 +33,19 @@ int grow(CmdList *list){
   return 1;
 }
 
+int proccessLine(CmdList *list, char* line[13]){
+
+  return 1;
+}
+
 int main(){
   CmdList list = { .cmds = NULL, .capacity = 1, .size = 0};
   list.cmds = malloc(sizeof(CmdRec) * list.capacity);
+
+  if(list.cmds == NULL){
+    /* malloc() failed */
+    return 1;
+  }
 
   char buf[256];
   char line[1024];
@@ -50,18 +53,37 @@ int main(){
   ssize_t lineLen = 0;
   ssize_t i;
 
-    while((charsRead = read(STDIN_FILENO, buf, sizeof(buf))) > 0){
+    while((charsRead = read(stdin, buf, sizeof(buf))) > 0){
         for(i = 0; i < charsRead; i++){
           if(buf[i] == '\n'){
             line[lineLen] = '\0';
-
-            printf("%s\n", line);
+            printf("Got line: %s\n", line);
+            proccessLine(&List, line);
             lineLen = 0;
           }else{
+            if(lineLen >= sizeof(line) - 1){
+              printf(stderr, "Input line too long\n");
+              free(list.cmds);
+              return 1;
+            }
             line[lineLen++]=buf[i];
           }   
         }
     }
+    if(charsRead < 0){
+      perror("read");
+      free(list.cmds);
+      return 1;
+    }
+
+    /* handle last command without a new line */ 
+    if(lineLen > 0){
+      line[lineLen] = '\0';
+      printf("Got line: %s\n", line);
+    }
+    proccessLine(&List, line);
+
+    free(list.cmds);
   return 0;
 }
 
