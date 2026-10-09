@@ -21,7 +21,7 @@ typedef struct CmdList{
   size_t size;
 } CmdList;
 
-void* grow(*CmdList list){
+int grow(CmdList *list){
   /* increase size by 5 */
   size_t newCap = list->capacity + 5;
   CmdRec *bigger = malloc(sizeof(CmdRec) * newCap);
@@ -45,26 +45,18 @@ int main(){
   list.cmds = malloc(sizeof(CmdRec) * list.capacity);
 
   char buf[256];
-  ssize_t n = read(STDIN_FILENO, buf, sizeof(buf) - 1);
+  char line[1024];
+  ssize_t charsRead;
+  ssize_t lineLen = 0;
+  ssize_t i;
 
-  int i;
-
-  if(n > 0){
-    buf[n] = '\0';
-    for(i = 0; i < n; i++){
-      if(list.size == list.capacity){
-        grow(&list);
-      }
-      list.cmds[i].cmdName=buf[n];
-      if(buf[n] == '\n' && n != buff - 1){ /* dont take last \n*/ 
-        list.cmds.cmdCount++;
-      }
-      list.size++;
+    while((charsRead = read(STDIN_FILENO, buf, sizeof(buf))) > 0){
+        for(i = 0; i < charsRead; i++){
+          if(buf[i] == '\n'){
+            line[lineLen] = '\0';
+          }   
+        }
     }
-    printf("%s%-12", buf);
-  }
-
-
   return 0;
 }
 
