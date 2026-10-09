@@ -53,12 +53,22 @@ int grow(CmdList *list) {
 }
 
 int proccessLine(CmdList *list, const char *line) {
+  char command[14];
   size_t i;
-  if(line[0] == '\0'){
+
+  /* skips whitespace & assings values(returns) */
+  if(sscanf(line, "%13s", command) != 1){
+    return 1; 
+  }
+
+  /* fails to process commands greater than 12 */
+  if(strlen(command) > 12){
+    fprintf(stderr, "Command name > 12: %s\n", line);
     return 1;
   }
+
   for(i = 0; i < list->size; i++){
-    if(strcmp(list->cmds[i].cmdName, line) == 0){
+    if(strcmp(list->cmds[i].cmdName, command) == 0){
       list->cmds[i].cmdCount++;
       return 1;
     }
@@ -69,7 +79,7 @@ int proccessLine(CmdList *list, const char *line) {
         }
       }
 
-      strncpy(list->cmds[list->size].cmdName, line, 12);
+      strncpy(list->cmds[list->size].cmdName, command, 12);
       list->cmds[list->size].cmdName[12] = '\0';
       list->cmds[list->size].cmdCount = 1;
       list->size++;
