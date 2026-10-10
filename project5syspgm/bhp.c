@@ -1,4 +1,4 @@
-/**
+/*
  * file: bhp.c 
  * author: erick martinez
  * course: csi 3336
@@ -16,10 +16,9 @@
  *  a dynamically growing list to count occurences of said commands.
  */
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdio.h> /* for fgetc() */
+#include <stdlib.h> /* malloc(), free() */
+#include <string.h> /* strncpy(), strcmp() */
 
 /* Count commands encountered in .bash_history. */
 typedef struct CmdRec {
@@ -87,6 +86,7 @@ int proccessLine(CmdList *list, const char *line) {
   return 1;
 }
 
+
 int main(void) {
   CmdList list = {.cmds = NULL, .capacity = 1, .size = 0};
   list.cmds = malloc(sizeof(CmdRec) * list.capacity);
@@ -95,43 +95,45 @@ int main(void) {
     return 1;
   }
 
-  char buf[256];
-  char line[1024];
-  ssize_t charsRead;
-  size_t lineLen = 0;
+  char command[14];
+  int ch;
+  int commandDone = 0; /* no bools! */
+  size_t commandLen = 0;
 
-  while ((charsRead = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
-    for (ssize_t i = 0; i < charsRead; i++) {
-      if (buf[i] == '\n') {
-        line[lineLen] = '\0';
-        if(proccessLine(&list, line) == 0){
+
+  while ((ch = fgetc(stdin)) != EOF) {
+      if(ch == '\n'){
+        command[commandLen] = '\0';
+
+        if(proccessLine(&list, command) == 0){
           fprintf(stderr, "Failed to process command\n");
           free(list.cmds);
           return 1;
         }
-        lineLen = 0;
-      } else {
-        if (lineLen >= sizeof(line) - 1) {
-          fprintf(stderr, "Input line too long\n");
-          free(list.cmds);
-          return 1;
-        }
 
-        line[lineLen++] = buf[i];
+        commandLen = 0;
+        commandDone = 0;
+      } else if(!commandDone){
+        if (ch == ' ') {
+          if(commandLen > 0){
+            commandDone = 1;
+          }
+        } else if(commandLen < sizeof(command) - 1){
+          command[commandLen++] = (char) ch;
+        }
       }
     }
-  }
 
-  if (charsRead < 0) {
+  if (ch < 0) {
     perror("read");
     free(list.cmds);
     return 1;
   }
 
   /* Handle the final line when it has no newline. */
-  if (lineLen > 0) {
-    line[lineLen] = '\0';
-    if(proccessLine(&list, line) == 0){
+  if (commandLen > 0) {
+    command[commandLen] = '\0';
+    if(proccessLine(&list, command)){
           fprintf(stderr, "Failed to process command\n");
           free(list.cmds);
           return 1;
