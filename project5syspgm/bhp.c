@@ -1,4 +1,4 @@
-/*
+/**
  * file: bhp.c 
  * author: erick martinez
  * course: csi 3336
@@ -10,38 +10,56 @@
  *
  * date modified: 10/09/2026
  *    - create a dynamically allocated CmdList
- *    - ensured all edge cases were accounted for
+ *    - added checks for allocation failures and long command names
  *
- * This C program reads from stdin a list of commands and assigns them objects in
- *  a dynamically growing list to count occurences of said commands.
+ * date modified: 10/10/2026
+ *    - documented functions and command parsing
+ *    - re-did stdin reading to use fgetc() instead of read()
+ *
+ * This program reads command names from standard input and counts their
+ * occurrences in a dynamically growing array. It prints each command name
+ * and its frequency to standard output.
  */
 
-#include <stdio.h> /* for fgetc() */
-#include <stdlib.h> /* malloc(), free() */
-#include <string.h> /* strncpy(), strcmp() */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-/* Count commands encountered in .bash_history. */
 typedef struct CmdRec {
   char cmdName[13]; /* Null-terminated command name. */
   int cmdCount;    /* Command frequency. */
 } CmdRec;
 
 typedef struct CmdList {
-  CmdRec *cmds;
-  size_t capacity;
-  size_t size;
+  CmdRec *cmds;     /* Points to the allocated command records. */
+  size_t capacity; /* Stores the number of records the array can hold. */
+  size_t size;     /* Stores the number of records currently in use. */
 } CmdList;
 
+/**
+ * grow
+ *
+ * Expands the command array by five records, preserving existing records.
+ * If allocation fails, the original array remains unchanged.
+ *
+ * Parameters:
+ *     list: the command list whose capacity will be increased.
+ *
+ * Output:
+ *     return: 1 on success, or 0 if allocation fails.
+ *     reference parameters: updates the array pointer and capacity in *list.
+ *     stream: none.
+ */
 int grow(CmdList *list) {
-  /* Increase capacity by 5. */
   size_t newCap = list->capacity + 5;
   CmdRec *bigger = malloc(sizeof(CmdRec) * newCap);
+  size_t i;
 
   if (bigger == NULL) {
     return 0;
   }
 
-  for (size_t i = 0; i < list->size; i++) {
+  for (i = 0; i < list->size; i++) {
     bigger[i] = list->cmds[i];
   }
 
@@ -51,16 +69,32 @@ int grow(CmdList *list) {
   return 1;
 }
 
+/**
+ * proccessLine
+ *
+ * Counts the first word in the supplied string as a command. Empty strings
+ * and command names longer than 12 characters do not change the counts.
+ *
+ * Parameters:
+ *     list: the command list to search and update.
+ *     line: a null-terminated string containing the command to process.
+ *
+ * Output:
+ *     return: 1 if counted or skipped, or 0 if array growth fails.
+ *     reference parameters: updates records, size, and possibly capacity
+ *         and the array pointer in *list.
+ *     stream: writes a diagnostic to stderr for names over 12 characters.
+ */
 int proccessLine(CmdList *list, const char *line) {
   char command[14];
   size_t i;
 
-  /* skips whitespace & assings values(returns) */
+  /* Read one extra character to detect names longer than 12 characters. */
   if(sscanf(line, "%13s", command) != 1){
     return 1; 
   }
 
-  /* fails to process commands greater than 12 */
+  /* Skip names that cannot fit in a command record. */
   if(strlen(command) > 12){
     fprintf(stderr, "Command name > 12: %s\n", line);
     return 1;
@@ -87,19 +121,34 @@ int proccessLine(CmdList *list, const char *line) {
 }
 
 
+/**
+ * main
+ *
+ * Reads commands from standard input and prints their execution counts.
+ * Input parsing uses spaces to separate command names from arguments.
+ *
+ * Parameters:
+ *     none.
+ *
+ * Output:
+ *     return: 0 on success, or 1 on allocation or input failure.
+ *     reference parameters: none.
+ *     stream: reads stdin, writes the summary to stdout, and writes input
+ *         and processing diagnostics to stderr.
+ */
 int main(void) {
-  CmdList list = {.cmds = NULL, .capacity = 1, .size = 0};
+  CmdList list = {NULL, 1, 0};
+  char command[14];
+  int ch;
+  int commandDone = 0;
+  size_t commandLen = 0;
+  size_t i;
+
   list.cmds = malloc(sizeof(CmdRec) * list.capacity);
 
   if (list.cmds == NULL) {
     return 1;
   }
-
-  char command[14];
-  int ch;
-  int commandDone = 0; /* no bools! */
-  size_t commandLen = 0;
-
 
   while ((ch = fgetc(stdin)) != EOF) {
       if(ch == '\n'){
@@ -119,12 +168,13 @@ int main(void) {
             commandDone = 1;
           }
         } else if(commandLen < sizeof(command) - 1){
+          /* Keep a thirteenth character so long names can be rejected. */
           command[commandLen++] = (char) ch;
         }
       }
     }
 
-  if (ch < 0) {
+  if (ferror(stdin)) {
     perror("read");
     free(list.cmds);
     return 1;
@@ -133,14 +183,13 @@ int main(void) {
   /* Handle the final line when it has no newline. */
   if (commandLen > 0) {
     command[commandLen] = '\0';
-    if(proccessLine(&list, command)){
+    if(proccessLine(&list, command) == 0){
           fprintf(stderr, "Failed to process command\n");
           free(list.cmds);
           return 1;
         }
   }
   
-  size_t i;
   for(i = 0; i < list.size; i++){
     printf("%-12s %4d\n",
         list.cmds[i].cmdName,
