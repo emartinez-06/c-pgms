@@ -10,6 +10,11 @@
 int main(int argc, char *argv[]){
   int ch;
   FILE * fileptr;
+
+  if(argc != 2){
+    fprintf(stderr, "Usage: %s [filename] \n", argv[0]);
+    return 1;
+  }
   
   fileptr = fopen(argv[1], "r");
   if (fileptr == NULL){
@@ -18,7 +23,7 @@ int main(int argc, char *argv[]){
   }
 
   while((ch = fgetc(fileptr)) != EOF){
-
+    putchar(ch);
   }
 
   fclose(fileptr);
