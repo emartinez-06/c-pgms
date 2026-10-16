@@ -53,11 +53,22 @@ int main(int argc, char *argv[]){
   struct stat stat_fileone;
   struct stat stat_filetwo;
 
+  if(argc != 3){
+    fprintf(stderr, "Usage: %s [file1] [file2]", argv[0]);
+    return EXIT_FAILURE;
+  }
+
+  if(stat(argv[1], &stat_fileone) == -1 ||
+     stat(argv[2], &stat_filetwo) == -1) {
+        perror("stat");
+        return EXIT_FAILURE;
+      }
+
   stat(argv[1], &stat_fileone);
   stat(argv[2], &stat_filetwo);
 
-  fprintf(stdout, "%lld\n", stat_fileone.st_size);
-  fprintf(stdout, "%lld\n", stat_filetwo.st_size);
+  fprintf(stdout, "%ld\n", stat_fileone.st_size);
+  fprintf(stdout, "%ld\n", stat_filetwo.st_size);
 
   return EXIT_SUCCESS;
 }
