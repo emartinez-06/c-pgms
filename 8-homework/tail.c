@@ -1,6 +1,35 @@
+/**
+ * file: tail.c
+ * author: Erick Martinez
+ * course: CSI 3336
+ * instructor: Prof. Aars
+ * assignment: Homework 8
+ * date created: October 21, 2026
+ *
+ * date modified: October 21, 2026
+ *     - File created, implemented, and completed on the same date.
+ *
+ * Prints the requested number of characters from the end of a file.
+ */
+
 #include <stdio.h>  /* fsetpos(), fopen(), fclose() */
 #include <stdlib.h> /* EXIT_FAILURE, EXIT_SUCCESS */
 
+/**
+ * main
+ *
+ * Prints the requested number of characters from the end of a file.
+ *
+ * Parameters:
+ *     argc: The number of command-line arguments.
+ *     argv: Command-line arguments containing an optional count and a filename.
+ *
+ * Output:
+ *     return: EXIT_SUCCESS on success or EXIT_FAILURE on error.
+ *     reference parameters: none.
+ *     stream: Writes the selected characters to stdout and error messages to
+ * stderr.
+ */
 int main(int argc, char *argv[]) {
   char *filename = NULL;
   int num_chars;

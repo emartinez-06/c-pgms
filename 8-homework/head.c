@@ -1,7 +1,35 @@
+/**
+ * file: head.c
+ * author: Erick Martinez
+ * course: CSI 3336
+ * instructor: Prof. Aars
+ * assignment: Homework 8
+ * date created: October 21, 2026
+ *
+ * date modified: October 21, 2026
+ *     - File created, implemented, and completed on the same date.
+ *
+ * Prints the requested number of lines from the beginning of a file.
+ */
+
 #include <stdio.h> /* fopen, fclose, fgetc */
 #include <stdlib.h>
 #include <unistd.h> /* getopt */
 
+/**
+ * main
+ *
+ * Prints the requested number of lines from the beginning of a file.
+ *
+ * Parameters:
+ *     argc: The number of command-line arguments.
+ *     argv: Command-line arguments containing -t, -f, -o, and -i filename.
+ *
+ * Output:
+ *     return: EXIT_SUCCESS on success or EXIT_FAILURE on error.
+ *     reference parameters: none.
+ *     stream: Writes the selected lines to stdout and error messages to stderr.
+ */
 int main(int argc, char *argv[]) {
   /* getopt */
   int opt;
