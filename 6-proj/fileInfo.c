@@ -50,25 +50,22 @@ typedef struct Node {
  *    stream: none 
  */
 int main(int argc, char *argv[]){
-  struct stat stat_fileone;
-  struct stat stat_filetwo;
+  struct stat sb1;
+  struct stat sb2;
+  int buf[4096];
 
   if(argc != 3){
     fprintf(stderr, "Usage: %s [file1] [file2]", argv[0]);
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
   }
 
-  if(stat(argv[1], &stat_fileone) == -1 ||
-     stat(argv[2], &stat_filetwo) == -1) {
-        perror("stat");
-        return EXIT_FAILURE;
+  if(lstat(argv[1], &sb1) == -1 ||
+     lstat(argv[2], &sb2) == -1) {
+        perror("lstat");
+        exit(EXIT_FAILURE);
       }
 
-  stat(argv[1], &stat_fileone);
-  stat(argv[2], &stat_filetwo);
+  write()
 
-  fprintf(stdout, "%ld\n", stat_fileone.st_size);
-  fprintf(stdout, "%ld\n", stat_filetwo.st_size);
-
-  return EXIT_SUCCESS;
+  exit(EXIT_SUCCESS);
 }
