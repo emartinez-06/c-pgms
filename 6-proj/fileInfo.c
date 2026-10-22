@@ -9,7 +9,10 @@
  *  - created file, defined basic structs, I/O
  *
  * date modified: 10/21/2026
- *  -
+ *  - helper functions & nodes
+ *
+ * date modified: 10/22/2026
+ *  - sort alogirthim
  *
  *  This document will complete the requirements of project 6
  */
@@ -70,7 +73,30 @@ void print_num(unsigned int n) {
     buf[--i] = '0' + (n % 10);
     n /= 10;
   }
-  write(STDOUT_FILENO, buf + i, sizeof(buf - i));
+  write(STDOUT_FILENO, buf + i, sizeof(*buf - i));
+}
+
+void sort(int order, Node *head) {
+  /* bubble sort */
+  int n = 0;
+  int i, j;
+  Node *p;
+  for (p = head; p; p = p->next) {
+    n++;
+  }
+
+  for (i = 0; i < n - 1; i++) {
+    Node *curr = head;
+
+    for (j = 0; j < n - 1; j++) {
+      if () {
+        FileInfo temp = curr->file;
+        curr->file = curr->next->file;
+        curr->next->file = temp;
+      }
+      curr = curr->next;
+    }
+  }
 }
 
 /*
@@ -96,6 +122,7 @@ int main(int argc, char *argv[]) {
 
   Node *head = NULL;
   Node *tail = NULL;
+  Node *curr = NULL;
 
   for (i = 1; i < argc; i++) {
     Node *node = malloc(sizeof(*node));
@@ -131,10 +158,35 @@ int main(int argc, char *argv[]) {
   read(STDIN_FILENO, buf, sizeof(buf));
   ord = buf[0] - '0';
 
-  if (ord < 1 || ord > 4) {
+  switch (ord) {
+  case 1:
+    /* by st_size */
+    sort(1, head);
+    break;
+  case 2:
+    /* by st_atim */
+    sort(2, head);
+    break;
+  case 3:
+    /* by st_mtim */
+    sort(3, head);
+    break;
+  case 4:
+    /* by st_ctim */
+    sort(4, head);
+    break;
+  default:
     p_error("invalid choice\n");
     exit(EXIT_FAILURE);
   }
+
+  curr = head;
+  while (curr) {
+    print(curr->file.path);
+    print(" ");
+    curr = curr->next;
+  }
+  print("\n");
 
   while (head != NULL) {
     Node *next = head->next;
