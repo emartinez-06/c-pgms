@@ -73,7 +73,31 @@ void print_num(unsigned int n) {
     buf[--i] = '0' + (n % 10);
     n /= 10;
   }
-  write(STDOUT_FILENO, buf + i, sizeof(*buf - i));
+  write(STDOUT_FILENO, buf + i, sizeof(buf) - i);
+}
+
+int cmp(const Node *a, const Node *b, int order) {
+  /* returns non-zero if a should sort after b */
+  int flag;
+  flag = 0;
+  switch (order) {
+  case 1:
+    flag = a->file.info.st_size > b->file.info.st_size;
+    break;
+  case 2:
+    flag = a->file.info.st_atim.tv_sec > b->file.info.st_atim.tv_sec;
+    break;
+  case 3:
+    flag = a->file.info.st_mtim.tv_sec > b->file.info.st_mtim.tv_sec;
+    break;
+  case 4:
+    flag = a->file.info.st_ctim.tv_sec > b->file.info.st_ctim.tv_sec;
+    break;
+  default:
+    p_error("cmp() failed\n");
+    exit(EXIT_FAILURE);
+  }
+  return flag;
 }
 
 void sort(int order, Node *head) {
@@ -89,8 +113,10 @@ void sort(int order, Node *head) {
     Node *curr = head;
 
     for (j = 0; j < n - 1; j++) {
-      if () {
-        FileInfo temp = curr->file;
+      /* nonzero-true 0-false */
+      if (cmp(curr, curr->next, order) > 0) {
+        FileInfo temp;
+        temp = curr->file;
         curr->file = curr->next->file;
         curr->next->file = temp;
       }
