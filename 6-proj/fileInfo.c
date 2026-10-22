@@ -16,7 +16,8 @@
 #include <stddef.h>
 #include <stdlib.h>   /* EXIT_SUCCESS */
 #include <sys/stat.h> /* struct stat */
-#include <unistd.h>   /* read() and write() */
+#include <sys/types.h>
+#include <unistd.h> /* read() and write() */
 
 /*
  * .st_size - size in bytes
@@ -88,26 +89,58 @@ void print_num(unsigned int n) {
  *    stream: none
  */
 int main(int argc, char *argv[]) {
-  struct stat sb1;
-  struct stat sb2;
-  int buf[4096];
+  char buf[16];
+  ssize_t n;
+  int ord;
+  int i;
 
-  if (argc != 3) {
-    p_error("Usage: ");
-    p_error(argv[0]);
-    p_error(" [file1] [file2]\n");
+  Node *head = NULL;
+  Node *tail = NULL;
+
+  for (i = 1; i < argc; i++) {
+    Node *node = malloc(sizeof(*node));
+
+    if (node == NULL) {
+      p_error("memalloc failed\n");
+      exit(EXIT_FAILURE);
+    }
+
+    node->file.path = argv[i];
+    node->next = NULL;
+
+    if (lstat(argv[i], &node->file.info) == -1) {
+      p_error("lstat");
+      free(node);
+      exit(EXIT_FAILURE);
+    }
+
+    if (head == NULL) {
+      head = node;
+    } else {
+      tail->next = node;
+    }
+
+    tail = node;
+  }
+
+  print("Choose your order: \n"
+        "1. by size \n"
+        "2. by access time \n"
+        "3. by modified time \n"
+        "4. by status change time \n");
+  read(STDIN_FILENO, buf, sizeof(buf));
+  ord = buf[0] - '0';
+
+  if (ord < 1 || ord > 4) {
+    p_error("invalid choice\n");
     exit(EXIT_FAILURE);
   }
 
-  if (lstat(argv[1], &sb1) == -1 || lstat(argv[2], &sb2) == -1) {
-    p_error("lstat");
-    exit(EXIT_FAILURE);
+  while (head != NULL) {
+    Node *next = head->next;
+    free(head);
+    head = next;
   }
-
-  print_num((unsigned int)sb1.st_ino);
-  print("\n");
-  print_num((unsigned int)sb2.st_ino);
-  print("\n");
 
   exit(EXIT_SUCCESS);
 }
