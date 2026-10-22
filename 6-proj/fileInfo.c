@@ -17,19 +17,10 @@
  *  This document will complete the requirements of project 6
  */
 #include <stddef.h>
-#include <stdlib.h>   /* EXIT_SUCCESS */
-#include <sys/stat.h> /* struct stat */
-#include <sys/types.h>
-#include <unistd.h> /* read() and write() */
-
-/*
- * .st_size - size in bytes
- * .st_atime - the time of the last access
- * .st_mtime - the time of the last modification
- * .st_ctime - the time of the last change to the inode
- *
- *
- */
+#include <stdlib.h>    /* EXIT_SUCCESS */
+#include <sys/stat.h>  /* struct stat */
+#include <sys/types.h> /* MACROS */
+#include <unistd.h>    /* read() and write() */
 
 typedef struct FileInfo {
   char *path;
@@ -57,23 +48,11 @@ void p_error(const char *s) {
   len = str_len(s);
   write(STDERR_FILENO, s, len);
 }
+
 void print(const char *s) {
   size_t len;
   len = str_len(s);
   write(STDOUT_FILENO, s, len);
-}
-
-void print_num(unsigned int n) {
-  char buf[16];
-  int i = sizeof(buf);
-
-  if (n == 0)
-    buf[--i] = '0';
-  while (n > 0) {
-    buf[--i] = '0' + (n % 10);
-    n /= 10;
-  }
-  write(STDOUT_FILENO, buf + i, sizeof(buf) - i);
 }
 
 int cmp(const Node *a, const Node *b, int order) {
@@ -82,16 +61,16 @@ int cmp(const Node *a, const Node *b, int order) {
   flag = 0;
   switch (order) {
   case 1:
-    flag = a->file.info.st_size > b->file.info.st_size;
+    flag = a->file.info.st_size < b->file.info.st_size;
     break;
   case 2:
-    flag = a->file.info.st_atim.tv_sec > b->file.info.st_atim.tv_sec;
+    flag = a->file.info.st_atim.tv_sec < b->file.info.st_atim.tv_sec;
     break;
   case 3:
-    flag = a->file.info.st_mtim.tv_sec > b->file.info.st_mtim.tv_sec;
+    flag = a->file.info.st_mtim.tv_sec < b->file.info.st_mtim.tv_sec;
     break;
   case 4:
-    flag = a->file.info.st_ctim.tv_sec > b->file.info.st_ctim.tv_sec;
+    flag = a->file.info.st_ctim.tv_sec < b->file.info.st_ctim.tv_sec;
     break;
   default:
     p_error("cmp() failed\n");
@@ -100,7 +79,7 @@ int cmp(const Node *a, const Node *b, int order) {
   return flag;
 }
 
-void sort(int order, Node *head) {
+Node *sort(int order, Node *head) {
   /* bubble sort */
   int n = 0;
   int i, j;
@@ -111,18 +90,28 @@ void sort(int order, Node *head) {
 
   for (i = 0; i < n - 1; i++) {
     Node *curr = head;
+    Node *prev = NULL;
 
     for (j = 0; j < n - 1; j++) {
       /* nonzero-true 0-false */
       if (cmp(curr, curr->next, order) > 0) {
-        FileInfo temp;
-        temp = curr->file;
-        curr->file = curr->next->file;
-        curr->next->file = temp;
+        Node *temp = curr->next;
+        curr->next = temp->next;
+        temp->next = curr;
+
+        if (prev == NULL) {
+          head = temp;
+        } else {
+          prev->next = temp;
+        }
+        prev = temp;
+      } else {
+        prev = curr;
+        curr = curr->next;
       }
-      curr = curr->next;
     }
   }
+  return head;
 }
 
 /*
@@ -142,7 +131,6 @@ void sort(int order, Node *head) {
  */
 int main(int argc, char *argv[]) {
   char buf[16];
-  ssize_t n;
   int ord;
   int i;
 
@@ -161,8 +149,8 @@ int main(int argc, char *argv[]) {
     node->file.path = argv[i];
     node->next = NULL;
 
-    if (lstat(argv[i], &node->file.info) == -1) {
-      p_error("lstat");
+    if (stat(argv[i], &node->file.info) == -1) {
+      p_error("stat");
       free(node);
       exit(EXIT_FAILURE);
     }
@@ -180,26 +168,30 @@ int main(int argc, char *argv[]) {
         "1. by size \n"
         "2. by access time \n"
         "3. by modified time \n"
-        "4. by status change time \n");
-  read(STDIN_FILENO, buf, sizeof(buf));
+        "4. by status change time \n"
+        ": ");
+  if (read(STDIN_FILENO, buf, sizeof(buf)) == -1) {
+    p_error("read");
+    exit(EXIT_FAILURE);
+  }
   ord = buf[0] - '0';
 
   switch (ord) {
   case 1:
     /* by st_size */
-    sort(1, head);
+    head = sort(1, head);
     break;
   case 2:
     /* by st_atim */
-    sort(2, head);
+    head = sort(2, head);
     break;
   case 3:
     /* by st_mtim */
-    sort(3, head);
+    head = sort(3, head);
     break;
   case 4:
     /* by st_ctim */
-    sort(4, head);
+    head = sort(4, head);
     break;
   default:
     p_error("invalid choice\n");
