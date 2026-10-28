@@ -17,6 +17,11 @@ int main(int argc, char *argv[]) {
   pid_t cpid, w;
   int wstatus;
 
+  if (argc < 2) {
+    fprintf(stderr, "Usage: %s command [arguments...]\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+
   cpid = fork();
   switch (cpid) {
   case -1:
@@ -24,17 +29,21 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   case 0:
     execvp(argv[1], argv + 1);
-    break;
+    perror("execvp");
+    return EXIT_FAILURE;
   default:
     /* parent process */
-    w = waitpid(cpid, $wstatus, WUNTRACED | WCONTINUED);
-    break;
+    w = waitpid(cpid, &wstatus, 0);
+    if (w == -1) {
+      perror("waitpid");
+      return EXIT_FAILURE;
+    }
+    if (WIFEXITED(wstatus)) {
+      return WEXITSTATUS(wstatus);
+    }
+    if (WIFSIGNALED(wstatus)) {
+      return WTERMSIG(wstatus);
+    }
+    return EXIT_FAILURE;
   }
-  if (WIFEXITED(wstatus)) {
-    fprintf(stdin, WEXITSTATUS(wstatus));
-  } else if (WIFSIGNALED(wstatus)) {
-    perror(WTERMSIG(wstatus));
-  }
-
-  return EXIT_SUCCESS;
 }
