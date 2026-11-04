@@ -11,12 +11,15 @@
  *
  */
 #include <dirent.h>
-#include <stdio.h>  /* printf() */
-#include <stdlib.h> /* exit MACROS */
-#include <unistd.h> /* chdir(), getcwd() */
+#include <stdio.h>     /* printf() */
+#include <stdlib.h>    /* exit MACROS */
+#include <string.h>    /* strcmp() */
+#include <sys/types.h> /* ino_t */
+#include <unistd.h>    /* getcwd() */
 
 int main(int argc, char *argv[]) {
-  const char *filename;
+  DIR *dp;
+  struct dirent *entry;
   char cwd[256];
 
   if (argc != 2) {
@@ -24,14 +27,27 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  filename = argv[1];
-  if ((getcwd(cwd, 256)) == NULL) {
+  if (getcwd(cwd, 256) == NULL) {
     perror("getcwd");
     exit(EXIT_FAILURE);
   }
 
-  printf("file: %s\n", filename);
-  printf("cwd: %s\n", cwd);
+  if ((dp = opendir(cwd)) == NULL) {
+    fprintf(stderr, "cannot opendir: %s\n", cwd);
+    exit(EXIT_FAILURE);
+  }
 
+  while ((entry = readdir(dp)) != NULL) {
+    if (entry == NULL) {
+      perror("readdir");
+      exit(EXIT_FAILURE);
+    }
+
+    if (strcmp(".", entry->d_name) != 0 && strcmp("..", entry->d_name)) {
+      printf("filename: %s\n", entry->d_name);
+    }
+  }
+
+  closedir(dp);
   exit(EXIT_SUCCESS);
 }
