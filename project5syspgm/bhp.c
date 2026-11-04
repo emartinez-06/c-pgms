@@ -1,5 +1,5 @@
 /**
- * file: bhp.c 
+ * file: bhp.c
  * author: erick martinez
  * course: csi 3336
  * assignment: project 5
@@ -27,11 +27,11 @@
 
 typedef struct CmdRec {
   char cmdName[13]; /* Null-terminated command name. */
-  int cmdCount;    /* Command frequency. */
+  int cmdCount;     /* Command frequency. */
 } CmdRec;
 
 typedef struct CmdList {
-  CmdRec *cmds;     /* Points to the allocated command records. */
+  CmdRec *cmds;    /* Points to the allocated command records. */
   size_t capacity; /* Stores the number of records the array can hold. */
   size_t size;     /* Stores the number of records currently in use. */
 } CmdList;
@@ -90,36 +90,35 @@ int proccessLine(CmdList *list, const char *line) {
   size_t i;
 
   /* Read one extra character to detect names longer than 12 characters. */
-  if(sscanf(line, "%13s", command) != 1){
-    return 1; 
+  if (sscanf(line, "%13s", command) != 1) {
+    return 1;
   }
 
   /* Skip names that cannot fit in a command record. */
-  if(strlen(command) > 12){
+  if (strlen(command) > 12) {
     fprintf(stderr, "Command name > 12: %s\n", line);
     return 1;
   }
 
-  for(i = 0; i < list->size; i++){
-    if(strcmp(list->cmds[i].cmdName, command) == 0){
+  for (i = 0; i < list->size; i++) {
+    if (strcmp(list->cmds[i].cmdName, command) == 0) {
       list->cmds[i].cmdCount++;
       return 1;
     }
   }
-      if(list->size == list->capacity){
-        if(!grow(list)){
-          return 0;
-        }
-      }
+  if (list->size == list->capacity) {
+    if (!grow(list)) {
+      return 0;
+    }
+  }
 
-      strncpy(list->cmds[list->size].cmdName, command, 12);
-      list->cmds[list->size].cmdName[12] = '\0';
-      list->cmds[list->size].cmdCount = 1;
-      list->size++;
+  strncpy(list->cmds[list->size].cmdName, command, 12);
+  list->cmds[list->size].cmdName[12] = '\0';
+  list->cmds[list->size].cmdCount = 1;
+  list->size++;
 
   return 1;
 }
-
 
 /**
  * main
@@ -151,28 +150,28 @@ int main(void) {
   }
 
   while ((ch = fgetc(stdin)) != EOF) {
-      if(ch == '\n'){
-        command[commandLen] = '\0';
+    if (ch == '\n') {
+      command[commandLen] = '\0';
 
-        if(proccessLine(&list, command) == 0){
-          fprintf(stderr, "Failed to process command\n");
-          free(list.cmds);
-          return 1;
-        }
+      if (proccessLine(&list, command) == 0) {
+        fprintf(stderr, "Failed to process command\n");
+        free(list.cmds);
+        return 1;
+      }
 
-        commandLen = 0;
-        commandDone = 0;
-      } else if(!commandDone){
-        if (ch == ' ') {
-          if(commandLen > 0){
-            commandDone = 1;
-          }
-        } else if(commandLen < sizeof(command) - 1){
-          /* Keep a thirteenth character so long names can be rejected. */
-          command[commandLen++] = (char) ch;
+      commandLen = 0;
+      commandDone = 0;
+    } else if (!commandDone) {
+      if (ch == ' ') {
+        if (commandLen > 0) {
+          commandDone = 1;
         }
+      } else if (commandLen < sizeof(command) - 1) {
+        /* Keep a thirteenth character so long names can be rejected. */
+        command[commandLen++] = (char)ch;
       }
     }
+  }
 
   if (ferror(stdin)) {
     perror("read");
@@ -183,20 +182,17 @@ int main(void) {
   /* Handle the final line when it has no newline. */
   if (commandLen > 0) {
     command[commandLen] = '\0';
-    if(proccessLine(&list, command) == 0){
-          fprintf(stderr, "Failed to process command\n");
-          free(list.cmds);
-          return 1;
-        }
+    if (proccessLine(&list, command) == 0) {
+      fprintf(stderr, "Failed to process command\n");
+      free(list.cmds);
+      return 1;
+    }
   }
-  
-  for(i = 0; i < list.size; i++){
-    printf("%-12s %4d\n",
-        list.cmds[i].cmdName,
-      list.cmds[i].cmdCount);
+
+  for (i = 0; i < list.size; i++) {
+    printf("%-12s %4d\n", list.cmds[i].cmdName, list.cmds[i].cmdCount);
   }
 
   free(list.cmds);
   return 0;
 }
-
