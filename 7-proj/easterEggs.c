@@ -16,9 +16,11 @@
 #include <stdlib.h>    /* exit MACROS */
 #include <string.h>    /* strcmp() */
 #include <sys/types.h> /* ino_t */
-#include <unistd.h>    /* getcwd() */
+#include <unistd.h>    /* getcwd(), fork() */
 
-int sprawl(const char *path) {
+typedef enum color { red, green, blue, yellow, orange } Color;
+
+int sprawl(const char *path, const char *filename) {
   DIR *dp;
   struct dirent *entry;
   int n;
@@ -44,7 +46,7 @@ int sprawl(const char *path) {
           closedir(dp);
           return -1;
         }
-        if (sprawl(charPath) == -1) {
+        if (sprawl(charPath, filename) == -1) {
           closedir(dp);
           fprintf(stderr, "recurse error\n");
           return -1;
@@ -62,18 +64,44 @@ int sprawl(const char *path) {
 
 int main(int argc, char *argv[]) {
   char cwd[256];
+  char *filename;
+
+  int i, num_children, j;
+  num_children = 5;
+  pid_t w;
+  pid_t c_pids[num_children];
 
   if (argc != 2) {
     fprintf(stderr, "Usage: %s [filename]\n", argv[0]);
     exit(EXIT_FAILURE);
   }
+  filename = argv[1];
 
   if (getcwd(cwd, 256) == NULL) {
     perror("getcwd");
     exit(EXIT_FAILURE);
   }
 
-  if (sprawl(cwd) == -1) {
+  for (i = 0; i < num_children; i++) {
+    Color color;
+    color = i;
+    c_pids[i] = fork();
+
+    switch (c_pids[i]) {
+    case -1:
+      perror("fork");
+      exit(EXIT_FAILURE);
+      break;
+    case 0:
+      /* child */
+
+      break;
+    default:
+      /* parent */
+    }
+  }
+
+  if (sprawl(cwd, filename) == -1) {
     fprintf(stderr, "error\n");
     exit(EXIT_FAILURE);
   }
