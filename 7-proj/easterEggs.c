@@ -21,10 +21,37 @@
 
 typedef enum color { red, green, blue, yellow, orange } Color;
 
-int sprawl(const char *path, const char *filename, char *paths[]) {
+int countColors(const char *path, Color color) {
+  /* These parameters will be used when the counting logic is implemented. */
+  (void)path;
+  (void)color;
+  int returnValue;
+  returnValue = 0;
+  /*
+   * in returnVal
+   * for path in paths:
+   *  chdir(path)
+   *  read file and count += to returnVal
+   * */
+  return returnValue;
+}
+int create_file_path(char *charPath, size_t size, const char *currpath,
+                     const char *filename) {
+  int n;
+  if ((n = snprintf(charPath, size, "%s/%s", currpath, filename)) < 0 ||
+      (size_t)n >= size) {
+
+    fprintf(stderr, "could not build dirpath\n");
+    return -1;
+  }
+  return 0;
+}
+
+int sprawl(const char *path, const char *filename, Color color) {
   DIR *dp;
   struct dirent *entry;
-  int n;
+  int occurences;
+  occurences = 0;
 
   if ((dp = opendir(path)) == NULL) {
     fprintf(stderr, "cannot opendir: %s\n", path);
@@ -36,18 +63,20 @@ int sprawl(const char *path, const char *filename, char *paths[]) {
     if (strcmp(".", entry->d_name) != 0 && strcmp("..", entry->d_name) != 0) {
 
       if (entry->d_type == DT_REG) {
-        printf("reg: %s\n", entry->d_name);
-      } else if (entry->d_type == DT_DIR) {
-        printf("dir: %s\n", entry->d_name);
-        char charPath[512];
-        if ((n = snprintf(charPath, sizeof charPath, "%s/%s", path,
-                          entry->d_name)) < 0 ||
-            (size_t)n >= sizeof charPath) {
-          fprintf(stderr, "could not build dirpath\n");
-          closedir(dp);
+        int count;
+        char filepath[512];
+        create_file_path(filepath, 512, path, entry->d_name);
+
+        if ((count = countColors(filepath, color)) == -1) {
+          fprintf(stderr, "counting error on file %s and color %d", filepath,
+                  (int)color);
           return -1;
         }
-        if (sprawl(charPath, filename, paths) == -1) {
+        occurences += count;
+      } else if (entry->d_type == DT_DIR) {
+        char dirpath[512];
+        create_file_path(dirpath, 512, path, entry->d_name);
+        if (sprawl(dirpath, filename, color) == -1) {
           closedir(dp);
           fprintf(stderr, "recurse error\n");
           return -1;
@@ -55,7 +84,6 @@ int sprawl(const char *path, const char *filename, char *paths[]) {
       } else if (entry->d_type == DT_UNKNOWN) {
         fprintf(stderr, "error unknown file type(%u) continuing...\n",
                 (unsigned int)entry->d_type);
-        printf("unknown: %s\n", entry->d_name);
       }
     }
   }
@@ -63,73 +91,52 @@ int sprawl(const char *path, const char *filename, char *paths[]) {
   return 0;
 }
 
-int countColors(char *path[], Color color) {
-  int returnValue;
-  returnValue = 0;
-  /*
-   * in returnVal
-   * for path in paths:
-   *  chdir(path)
-   *  read file and count += to returnVal
-   * */
-  return returnValue;
-}
-
 int proccessColor(Color color, const char *path, const char *filename) {
   int occurences;
-  char *paths = malloc(4096);
 
   switch (color) {
   case red:
-    if (sprawl(path, filename, &paths) == -1) {
+    if ((occurences = sprawl(path, filename, red)) == -1) {
       fprintf(stderr, "error\n");
       return -1;
     }
-
-    occurences = countColors(&paths, color);
     break;
   case green:
-    if (sprawl(path, filename, &paths) == -1) {
+    if ((occurences = sprawl(path, filename, green)) == -1) {
       fprintf(stderr, "error\n");
       return -1;
     }
-
-    occurences = countColors(&paths, color);
     break;
   case blue:
-    if (sprawl(path, filename, &paths) == -1) {
+    if ((occurences = sprawl(path, filename, blue)) == -1) {
       fprintf(stderr, "error\n");
       return -1;
     }
-    occurences = countColors(&paths, color);
     break;
   case yellow:
-    if (sprawl(path, filename, &paths) == -1) {
+    if ((occurences = sprawl(path, filename, yellow)) == -1) {
       fprintf(stderr, "error\n");
       return -1;
     }
-    occurences = countColors(&paths, color);
     break;
   case orange:
-    if (sprawl(path, filename, &paths) == -1) {
+    if ((occurences = sprawl(path, filename, orange)) == -1) {
       fprintf(stderr, "error\n");
       return -1;
     }
-    occurences = countColors(&paths, color);
     break;
   default:
     fprintf(stderr, "error: unknown color %d\n", (int)color);
     return -1;
   }
 
-  free(paths);
   return occurences;
 }
 
 int main(int argc, char *argv[]) {
   char cwd[256];
   char *filename;
-  Color *completedColors[5];
+  char *colors[5] = {"red", "green", "blue", "yellow", "orange"};
 
   int i, num_children, j;
   num_children = 5;
@@ -164,7 +171,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "error processing color %d\n", (int)color);
         exit(EXIT_FAILURE);
       }
-      completedColors[color] + 1;
       return ret;
       break;
     default:
@@ -174,13 +180,16 @@ int main(int argc, char *argv[]) {
   }
 
   for (j = 0; j < num_children; j++) {
-    w = waitpid(-1, NULL, 0);
+    int status, count;
+    w = waitpid(c_pids[j], &status, 0);
     if (w == -1) {
       perror("waitpid");
       exit(EXIT_FAILURE);
     }
-    /* w holds the number of occurences for each color */
-    printf("%u: %d\n", completedColors[0], w);
+    if (WIFEXITED(status)) {
+      count = WEXITSTATUS(status);
+      printf("%s: %d\n", colors[j], (int)count);
+    }
   }
 
   exit(EXIT_SUCCESS);
