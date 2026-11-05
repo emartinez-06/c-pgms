@@ -6,7 +6,7 @@
  * due date: 11/08/2026
  *
  * date modified: 11/4/2026
- *  -
+ *  - recursie algo to sprawl + some basic color stubs
  *
  *
  */
@@ -16,6 +16,7 @@
 #include <stdlib.h>    /* exit MACROS */
 #include <string.h>    /* strcmp() */
 #include <sys/types.h> /* ino_t */
+#include <sys/wait.h>  /* waitpid */
 #include <unistd.h>    /* getcwd(), fork() */
 
 typedef enum color { red, green, blue, yellow, orange } Color;
@@ -62,6 +63,29 @@ int sprawl(const char *path, const char *filename) {
   return 0;
 }
 
+int proccessColor(Color color, const char *path, const char *filename) {
+  if (sprawl(path, filename) == -1) {
+    fprintf(stderr, "error\n");
+    return -1;
+  }
+  switch (color) {
+  case red:
+    break;
+  case green:
+    break;
+  case blue:
+    break;
+  case yellow:
+    break;
+  case orange:
+    break;
+  default:
+    fprintf(stderr, "error: unknown color %s\n", color);
+    return -1;
+  }
+  return 0;
+}
+
 int main(int argc, char *argv[]) {
   char cwd[256];
   char *filename;
@@ -94,16 +118,22 @@ int main(int argc, char *argv[]) {
       break;
     case 0:
       /* child */
-
+      if (proccessColor(color, cwd, filename) == -1) {
+        fprintf(stderr, "error processing color %s\n", color);
+        exit(EXIT_FAILURE);
+      }
       break;
     default:
       /* parent */
     }
   }
 
-  if (sprawl(cwd, filename) == -1) {
-    fprintf(stderr, "error\n");
-    exit(EXIT_FAILURE);
+  for (j = 0; j < num_children; j++) {
+    w = waitpid(-1, NULL, 0);
+    if (w == -1) {
+      perror("waitpid");
+      exit(EXIT_FAILURE);
+    }
   }
 
   exit(EXIT_SUCCESS);
