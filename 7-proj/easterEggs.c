@@ -21,7 +21,7 @@
 
 typedef enum color { red, green, blue, yellow, orange } Color;
 
-int sprawl(const char *path, const char *filename) {
+int sprawl(const char *path, const char *filename, char *paths[]) {
   DIR *dp;
   struct dirent *entry;
   int n;
@@ -47,7 +47,7 @@ int sprawl(const char *path, const char *filename) {
           closedir(dp);
           return -1;
         }
-        if (sprawl(charPath, filename) == -1) {
+        if (sprawl(charPath, filename, paths) == -1) {
           closedir(dp);
           fprintf(stderr, "recurse error\n");
           return -1;
@@ -63,32 +63,73 @@ int sprawl(const char *path, const char *filename) {
   return 0;
 }
 
+int countColors(char *path[], Color color) {
+  int returnValue;
+  returnValue = 0;
+  /*
+   * in returnVal
+   * for path in paths:
+   *  chdir(path)
+   *  read file and count += to returnVal
+   * */
+  return returnValue;
+}
+
 int proccessColor(Color color, const char *path, const char *filename) {
-  if (sprawl(path, filename) == -1) {
-    fprintf(stderr, "error\n");
-    return -1;
-  }
+  int occurences;
+  char *paths = malloc(4096);
+
   switch (color) {
   case red:
+    if (sprawl(path, filename, &paths) == -1) {
+      fprintf(stderr, "error\n");
+      return -1;
+    }
+
+    occurences = countColors(&paths, color);
     break;
   case green:
+    if (sprawl(path, filename, &paths) == -1) {
+      fprintf(stderr, "error\n");
+      return -1;
+    }
+
+    occurences = countColors(&paths, color);
     break;
   case blue:
+    if (sprawl(path, filename, &paths) == -1) {
+      fprintf(stderr, "error\n");
+      return -1;
+    }
+    occurences = countColors(&paths, color);
     break;
   case yellow:
+    if (sprawl(path, filename, &paths) == -1) {
+      fprintf(stderr, "error\n");
+      return -1;
+    }
+    occurences = countColors(&paths, color);
     break;
   case orange:
+    if (sprawl(path, filename, &paths) == -1) {
+      fprintf(stderr, "error\n");
+      return -1;
+    }
+    occurences = countColors(&paths, color);
     break;
   default:
-    fprintf(stderr, "error: unknown color %s\n", color);
+    fprintf(stderr, "error: unknown color %d\n", (int)color);
     return -1;
   }
-  return 0;
+
+  free(paths);
+  return occurences;
 }
 
 int main(int argc, char *argv[]) {
   char cwd[256];
   char *filename;
+  Color *completedColors[5];
 
   int i, num_children, j;
   num_children = 5;
@@ -110,6 +151,7 @@ int main(int argc, char *argv[]) {
     Color color;
     color = i;
     c_pids[i] = fork();
+    int ret;
 
     switch (c_pids[i]) {
     case -1:
@@ -118,13 +160,16 @@ int main(int argc, char *argv[]) {
       break;
     case 0:
       /* child */
-      if (proccessColor(color, cwd, filename) == -1) {
-        fprintf(stderr, "error processing color %s\n", color);
+      if ((ret = proccessColor(color, cwd, filename)) == -1) {
+        fprintf(stderr, "error processing color %d\n", (int)color);
         exit(EXIT_FAILURE);
       }
+      completedColors[color] + 1;
+      return ret;
       break;
     default:
       /* parent */
+      break;
     }
   }
 
@@ -134,6 +179,8 @@ int main(int argc, char *argv[]) {
       perror("waitpid");
       exit(EXIT_FAILURE);
     }
+    /* w holds the number of occurences for each color */
+    printf("%u: %d\n", completedColors[0], w);
   }
 
   exit(EXIT_SUCCESS);

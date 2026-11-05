@@ -48,6 +48,7 @@ int main(void) {
       return EXIT_SUCCESS;
     default:
       /* parent process */
+      break;
     }
   }
 
