@@ -5,10 +5,13 @@
  * assignment: project 7
  * due date: 11/08/2026
  *
+ * date modified: 11/05/2026
+ *  - Added binary color counts, child results, output spacing, and comments.
+ *
  * date modified: 11/4/2026
- *  - recursie algo to sprawl + some basic color stubs
+ *  - Added directory searches and basic color handling.
  *
- *
+ * Five child processes count colors in matching files and report their totals.
  */
 #include <dirent.h>
 #include <stddef.h>
@@ -21,6 +24,20 @@
 
 typedef enum color { red, green, blue, yellow, orange } Color;
 
+/**
+ * countColors
+ *
+ * Count one color in a binary file.
+ *
+ * Parameters:
+ *   path: full file path.
+ *   color: color to count.
+ *
+ * Output:
+ *   return: count, or -1 on error.
+ *   reference parameters: none.
+ *   stream: errors to stderr.
+ */
 int countColors(const char *path, Color color) {
   int occurences;
   occurences = 0;
@@ -45,6 +62,22 @@ int countColors(const char *path, Color color) {
   fclose(fp);
   return occurences;
 }
+/**
+ * create_file_path
+ *
+ * Join a folder path and a file name.
+ *
+ * Parameters:
+ *   charPath: buffer for the full path.
+ *   size: buffer size in bytes.
+ *   currpath: folder path.
+ *   filename: file or folder name.
+ *
+ * Output:
+ *   return: 0 on success, or -1 on error.
+ *   reference parameters: charPath holds the full path on success.
+ *   stream: errors to stderr.
+ */
 int create_file_path(char *charPath, size_t size, const char *currpath,
                      const char *filename) {
   int n;
@@ -57,6 +90,21 @@ int create_file_path(char *charPath, size_t size, const char *currpath,
   return 0;
 }
 
+/**
+ * sprawl
+ *
+ * Search folders and count one color in matching files.
+ *
+ * Parameters:
+ *   path: starting folder.
+ *   filename: file name to find.
+ *   color: color to count.
+ *
+ * Output:
+ *   return: total count, or -1 on error.
+ *   reference parameters: none.
+ *   stream: errors to stderr.
+ */
 int sprawl(const char *path, const char *filename, Color color) {
   DIR *dp;
   struct dirent *entry;
@@ -112,6 +160,21 @@ int sprawl(const char *path, const char *filename, Color color) {
   return occurences;
 }
 
+/**
+ * proccessColor
+ *
+ * Run the file search for the assigned color.
+ *
+ * Parameters:
+ *   color: assigned color.
+ *   path: starting folder.
+ *   filename: file name to find.
+ *
+ * Output:
+ *   return: total count, or -1 on error.
+ *   reference parameters: none.
+ *   stream: errors to stderr.
+ */
 int proccessColor(Color color, const char *path, const char *filename) {
   int occurences;
 
@@ -154,10 +217,24 @@ int proccessColor(Color color, const char *path, const char *filename) {
   return occurences;
 }
 
+/**
+ * main
+ *
+ * Start five children, collect their counts, and print results.
+ *
+ * Parameters:
+ *   argc: number of command-line arguments.
+ *   argv: program name and target file name.
+ *
+ * Output:
+ *   return: parent exit status or child color count.
+ *   reference parameters: none.
+ *   stream: results to stdout; errors to stderr.
+ */
 int main(int argc, char *argv[]) {
   char cwd[256];
   char *filename;
-  char *colors[5] = {"red", "green", "blue", "yellow", "orange"};
+  char *colors[5] = {"red:", "green:", "blue:", "yellow:", "orange:"};
   int counts[5];
 
   int i, num_children, j;
@@ -214,7 +291,7 @@ int main(int argc, char *argv[]) {
   }
 
   for (j = 0; j < num_children; j++) {
-    printf("%s: %d\n", colors[j], (int)counts[j]);
+    printf("%-7s %5d\n", colors[j], (int)counts[j]);
   }
 
   exit(EXIT_SUCCESS);
