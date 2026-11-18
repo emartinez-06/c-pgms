@@ -1,9 +1,12 @@
 
+#include <inttypes.h>
 #include <stdio.h>     /* fprintf() */
 #include <stdlib.h>    /* EXIT_MACROS */
+#include <string.h>    /* strinlen() */
+#include <sys/stat.h>  /* stat() */
 #include <sys/types.h> /* pid_t */
 #include <sys/wait.h>  /* waitpid() */
-#include <unistd.h>    /* pipe() */
+#include <unistd.h>    /* pipe(), read(), write() */
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
@@ -11,28 +14,15 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   char *filename;
-  int num_children;
+  char buffer[256];
+  int base, extra, next, count, i, j, fds[2], num_children, psum;
+  struct stat file_info;
+
   filename = argv[1];
-  num_children = atoi(argv[2]);
+  sscanf(argv[2], "%d", &num_children);
+  count = stat(filename, &file_info);
 
-  pid_t w;
-  pid_t c_pids[num_children];
-  int i, j;
-  int fds[2];
-  int rets[num_children];
-
-  FILE *fp;
-  int count, num;
-
-  if ((fp = fopen(filename, "rb")) == NULL) {
-    perror("fopen");
-    exit(EXIT_FAILURE);
-  }
-  count = 0;
-  while (fread(&num, sizeof num, 1, fp) == 1) {
-    count++;
-  }
-  fclose(fp);
+  pid_t c_pids[num_children], w;
 
   if (num_children > count) {
     fprintf(stderr,
@@ -41,26 +31,26 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  base = count / num_children;
+  extra = count % num_children;
+  next = 0, psum = 0;
+
   for (i = 0; i < num_children; i++) {
-    int sum;
+    int id, n, m;
     if (pipe(fds) == -1) {
       perror("pipe()");
       exit(EXIT_FAILURE);
     }
-    c_pids[i] = fork();
+    /* indicies calculations */
+    n = next;
+    m = n + base;
+    if (i < extra) {
+      m++;
+    }
+    next = m;
 
-    switch (c_pids[i]) {
-    case -1:
-      perror("fork");
-      exit(EXIT_FAILURE);
-      break;
-    case 0:
-      /* child */
-      return sum;
-      break;
-    default:
-      /* parent */
-      break;
+    id = c_pids[i] = fork();
+    if (id == 0) {
     }
   }
 
